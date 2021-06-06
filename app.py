@@ -1,23 +1,28 @@
 import os
-from models import setup_db
 from http import HTTPStatus
 
-from flask import Flask, request, abort, jsonify
-from flask_sqlalchemy import SQLAlchemy
+from flask import Flask, jsonify
 from flask_cors import CORS
+
 from models import setup_db
 
 
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__)
+
+    # setup using one of the config modules in config.py
+    # create a APP_SETTINGS variable in .env file such as
+    # APP_SETTINGS=config.DevelopmentConfig
+
     app.config.from_object(os.environ['APP_SETTINGS'])
+
     setup_db(app)
+
+    # Set up CORS. Allow '*' for origins.
     CORS(app, resources={r"*": {"origins": "*"}})
 
-    """
-    Use the after_request decorator to set Access-Control-Allow
-    """
+    # Use the after_request decorator to set Access-Control-Allow
 
     @app.after_request
     def after_request(response):
@@ -30,6 +35,8 @@ def create_app(test_config=None):
     @app.route('/')
     def hello():
         return 'hello world'
+
+    # Error handlers
 
     @app.errorhandler(HTTPStatus.BAD_REQUEST)
     def bad_request_400(error):
