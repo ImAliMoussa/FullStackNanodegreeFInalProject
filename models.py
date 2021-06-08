@@ -1,9 +1,16 @@
 import enum
-from datetime import date
+from datetime import datetime
 
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Column, String, Integer, Enum, Date
+from sqlalchemy import (
+    Column,
+    String,
+    Integer,
+    Enum,
+    DateTime,
+    ForeignKey
+)
 
 db = SQLAlchemy()
 
@@ -33,43 +40,54 @@ class GenderEnum(enum.Enum):
 
 class Actor(db.Model):
     """
-    Database model for actor
+    Database model for an actor
     """
+    __tablename__ = 'actor'
     id = Column(Integer, primary_key=True)
     name = Column(String)
     age = Column(Integer)
     gender = Column(Enum(GenderEnum))
+    movies = db.relationship('Job', backref='movie', lazy=True)
 
-    class Movie(db.Model):
-        """
-        Database model for a movie
-        """
-        id = Column(Integer, primary_key=True)
-        title = Column(String)
-        release_date = Column(Date, default=date.today)
+    def __init__(self, name: str, age: int, gender: str):
+        self.name = name
+        self.age = age
+        gender = gender.lower()
+        if gender == 'male':
+            self.gender = GenderEnum.male
+        elif gender == 'female':
+            self.gender = GenderEnum.female
+        else:
+            raise Exception('Gender should be "male" or "female"')
 
-        def insert(self):
-            db.session.add(self)
-            db.session.commit()
+    def insert(self):
+        db.session.add(self)
+        db.session.commit()
 
-        def update(self):
-            db.session.commit()
+    def update(self):
+        db.session.commit()
 
-        def delete(self):
-            db.session.delete(self)
-            db.session.commit()
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
 
-        def format(self):
-            return f'Actor: \n{vars(self)}'
+    def format(self):
+        return f'Actor: \n{vars(self)}'
 
 
 class Movie(db.Model):
     """
     Database model for a movie
     """
+    __tablename__ = 'movie'
     id = Column(Integer, primary_key=True)
     title = Column(String)
-    release_date = Column(Date, default=date.today)
+    release_date = Column(DateTime, default=datetime.utcnow)
+    actors = db.relationship('Job', backref='actor', lazy=True)
+
+    def __init__(self, title: str, release_date: datetime):
+        self.title = title
+        self.release_date = release_date
 
     def insert(self):
         db.session.add(self)
@@ -84,3 +102,31 @@ class Movie(db.Model):
 
     def format(self):
         return f'Movie: \n{vars(self)}'
+
+
+class Job(db.Model):
+    """
+    Many-to-many relationship between actors and movies
+    """
+    __tablename__ = 'job'
+    id = Column(Integer, primary_key=True)
+    movie_id = Column(Integer, ForeignKey('movie.id', ondelete='CASCADE'), nullable=False)
+    actor_id = Column(Integer, ForeignKey('actor.id', ondelete='CASCADE'), nullable=False)
+
+    def __init__(self, movie_id: int, actor_id: int):
+        self.movie_id = movie_id
+        self.actor_id = actor_id
+
+    def insert(self):
+        db.session.add(self)
+        db.session.commit()
+
+    def update(self):
+        db.session.commit()
+
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
+
+    def format(self):
+        return f'ActingJob: \n{vars(self)}'
