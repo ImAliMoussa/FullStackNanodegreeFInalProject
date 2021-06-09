@@ -1,10 +1,10 @@
 import os
 from http import HTTPStatus
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request, abort
 from flask_cors import CORS
 
-from models import setup_db
+from models import setup_db, Actor, GenderEnum
 
 
 def create_app(test_config=None):
@@ -33,8 +33,74 @@ def create_app(test_config=None):
         return response
 
     @app.route('/')
-    def hello():
-        return 'hello world'
+    def default_route():
+        """
+        Just to test app is running
+        """
+        return 'Welcome to Agency'
+
+    # Helper functions
+
+    def serialize_list(model_list: list):
+        """
+        Each model should have a serialize attribute
+        To return the data to the frontend serialized this function should be called
+        to serialize a list of models
+        """
+        return [i.serialize for i in model_list]
+
+    # Actor Routes
+
+    @app.route('/actors', methods=['GET'])
+    def get_actors():
+        actors = Actor.query.all()
+        actors_serialized = serialize_list(actors)
+        return jsonify({"actors": actors_serialized}), HTTPStatus.OK
+
+    @app.route('/actors', methods=['POST'])
+    def post_actor():
+        json = request.get_json()
+
+        name = json.get("name")
+        age = int(json.get("age"))
+        gender = json.get("gender")
+
+        # make sure all required data is present, else -> 400 error response
+        if name is None or age is None or gender is None:
+            abort(HTTPStatus.BAD_REQUEST)
+
+        # create new question and add commit to the db
+        actor = Actor(name=name, age=age, gender=gender)
+        actor.insert()
+
+        return jsonify(success=True), HTTPStatus.OK
+
+    @app.route('/actors/<int:key>', methods=['DELETE'])
+    def delete_actor(key: int):
+        actor = Actor.query.get_or_404(key)
+        actor.delete()
+        return jsonify(success=True), HTTPStatus.OK
+
+    @app.route('/actors/<int:key>', methods=['PATCH'])
+    def patch_actor(key: int):
+        json = request.get_json()
+        actor = Actor.query.get_or_404(key)
+
+        name = json.get("name")
+        if name is not None:
+            actor.name = name
+
+        age = json.get("age")
+        if age is not None:
+            actor.age = age
+
+        gender = json.get("gender")
+        if gender is not None:
+            actor.gender = GenderEnum.transform(gender)
+
+        actor.update()
+
+        return jsonify(success=True), HTTPStatus.OK
 
     # Error handlers
 

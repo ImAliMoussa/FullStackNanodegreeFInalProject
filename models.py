@@ -37,6 +37,21 @@ class GenderEnum(enum.Enum):
     male = 1
     female = 2
 
+    @staticmethod
+    def transform(gender: str):
+        gender = gender.lower()
+        if gender == 'male':
+            return GenderEnum.male
+        elif gender == 'female':
+            return GenderEnum.female
+        raise Exception('Gender should be "male" or "female"')
+
+    @staticmethod
+    def reverse_transform(gender):
+        if gender == GenderEnum.male:
+            return 'male'
+        return 'female'
+
 
 class Actor(db.Model):
     """
@@ -52,13 +67,7 @@ class Actor(db.Model):
     def __init__(self, name: str, age: int, gender: str):
         self.name = name
         self.age = age
-        gender = gender.lower()
-        if gender == 'male':
-            self.gender = GenderEnum.male
-        elif gender == 'female':
-            self.gender = GenderEnum.female
-        else:
-            raise Exception('Gender should be "male" or "female"')
+        self.gender = GenderEnum.transform(gender)
 
     def insert(self):
         db.session.add(self)
@@ -73,6 +82,16 @@ class Actor(db.Model):
 
     def format(self):
         return f'Actor: \n{vars(self)}'
+
+    @property
+    def serialize(self):
+        """Return object data in easily serializable format"""
+        return {
+            'id': self.id,
+            'name': self.name,
+            'age': self.age,
+            'gender': GenderEnum.reverse_transform(self.gender)
+        }
 
 
 class Movie(db.Model):
@@ -102,6 +121,14 @@ class Movie(db.Model):
 
     def format(self):
         return f'Movie: \n{vars(self)}'
+
+    @property
+    def serialize(self):
+        return {
+            'id': self.id,
+            'title': self.title,
+            'release_date': self.release_date,
+        }
 
 
 class Job(db.Model):
