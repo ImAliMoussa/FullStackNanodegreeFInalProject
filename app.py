@@ -4,6 +4,7 @@ from http import HTTPStatus
 from flask import Flask, jsonify, request, abort
 from flask_cors import CORS
 
+from auth import requires_auth, AuthError
 from models import setup_db, Actor, GenderEnum
 
 
@@ -52,12 +53,14 @@ def create_app(test_config=None):
     # Actor Routes
 
     @app.route('/actors', methods=['GET'])
+    @requires_auth(permission='get:actors')
     def get_actors():
         actors = Actor.query.all()
         actors_serialized = serialize_list(actors)
         return jsonify({"actors": actors_serialized}), HTTPStatus.OK
 
     @app.route('/actors', methods=['POST'])
+    @requires_auth(permission='post:actors')
     def post_actor():
         json = request.get_json()
 
@@ -76,12 +79,14 @@ def create_app(test_config=None):
         return jsonify(success=True), HTTPStatus.OK
 
     @app.route('/actors/<int:key>', methods=['DELETE'])
+    @requires_auth(permission='delete:actors')
     def delete_actor(key: int):
         actor = Actor.query.get_or_404(key)
         actor.delete()
         return jsonify(success=True), HTTPStatus.OK
 
     @app.route('/actors/<int:key>', methods=['PATCH'])
+    @requires_auth(permission='patch:actors')
     def patch_actor(key: int):
         json = request.get_json()
         actor = Actor.query.get_or_404(key)
@@ -104,6 +109,19 @@ def create_app(test_config=None):
 
     # Error handlers
 
+    @app.errorhandler(AuthError)
+    def auth_error_handler(e: AuthError):
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": e.status_code,
+                    "message": e.error.get("description"),
+                }
+            ),
+            e.status_code,
+        )
+
     @app.errorhandler(HTTPStatus.BAD_REQUEST)
     def bad_request_400(error):
         return (
@@ -116,6 +134,20 @@ def create_app(test_config=None):
             ),
             HTTPStatus.BAD_REQUEST,
         )
+
+    @app.errorhandler(HTTPStatus.UNAUTHORIZED)
+    def unauthorized_401(error):
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": HTTPStatus.UNAUTHORIZED,
+                    "message": HTTPStatus.UNAUTHORIZED.phrase,
+                }
+            ),
+            HTTPStatus.UNAUTHORIZED,
+        )
+
 
     @app.errorhandler(HTTPStatus.NOT_FOUND)
     def not_found_404(error):
