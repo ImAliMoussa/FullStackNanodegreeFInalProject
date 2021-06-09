@@ -8,8 +8,7 @@ from jose import jwt
 
 AUTH0_DOMAIN = 'alimoussa.eu.auth0.com'
 ALGORITHMS = ['RS256']
-API_AUDIENCE = 'http://localhost:5000'
-# API_AUDIENCE = "Capstone-Udacity"
+API_AUDIENCE = "Capstone-Udacity"
 
 # AuthError Exception
 '''

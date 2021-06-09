@@ -5,7 +5,7 @@ from flask import Flask, jsonify, request, abort
 from flask_cors import CORS
 
 from auth import requires_auth, AuthError
-from models import setup_db, Actor, GenderEnum
+from models import setup_db, Actor, GenderEnum, Movie
 
 
 def create_app(test_config=None):
@@ -107,6 +107,53 @@ def create_app(test_config=None):
 
         return jsonify(success=True), HTTPStatus.OK
 
+    # Movie handlers
+
+    @app.route('/movies', methods=['GET'])
+    @requires_auth(permission='get:movies')
+    def get_movies():
+        movies = Movie.query.all()
+        movies_serialized = serialize_list(movies)
+        return jsonify({"movies": movies_serialized}), HTTPStatus.OK
+
+    @app.route('/movies', methods=['POST'])
+    @requires_auth(permission='post:movies')
+    def post_movie():
+        json = request.get_json()
+
+        title = json.get("title")
+
+        # make sure all required data is present, else -> 400 error response
+        if title is None:
+            abort(HTTPStatus.BAD_REQUEST)
+
+        # create new question and add commit to the db
+        movie = Movie(title=title)
+        movie.insert()
+
+        return jsonify(success=True), HTTPStatus.OK
+
+    @app.route('/movies/<int:key>', methods=['DELETE'])
+    @requires_auth(permission='delete:movies')
+    def delete_actor(key: int):
+        movie = Movie.query.get_or_404(key)
+        movie.delete()
+        return jsonify(success=True), HTTPStatus.OK
+
+    @app.route('/movies/<int:key>', methods=['PATCH'])
+    @requires_auth(permission='patch:movies')
+    def patch_actor(key: int):
+        json = request.get_json()
+        movie = Movie.query.get_or_404(key)
+
+        title = json.get("title")
+        if title is not None:
+            movie.title = title
+
+        movie.update()
+
+        return jsonify(success=True), HTTPStatus.OK
+
     # Error handlers
 
     @app.errorhandler(AuthError)
@@ -147,7 +194,6 @@ def create_app(test_config=None):
             ),
             HTTPStatus.UNAUTHORIZED,
         )
-
 
     @app.errorhandler(HTTPStatus.NOT_FOUND)
     def not_found_404(error):
