@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 from app import create_app
 from config import TestingConfig
 
+load_dotenv()
+
 
 class Roles:
     casting_assistant = 'casting_assistant'
@@ -26,7 +28,6 @@ class FlaskTestCase(unittest.TestCase):
 
     def setUp(self):
         """Define test variables and initialize app."""
-        load_dotenv()
         self.app = create_app(config=TestingConfig)
         self.client = self.app.test_client
 

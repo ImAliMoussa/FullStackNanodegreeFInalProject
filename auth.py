@@ -7,6 +7,10 @@ from urllib.request import urlopen
 from flask import request
 from jose import jwt
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 AUTH0_DOMAIN = os.environ['AUTH0_DOMAIN']
 ALGORITHMS = ['RS256']
 API_AUDIENCE = os.environ['AUTH0_AUDIENCE']
