@@ -1,14 +1,17 @@
 import os
 from http import HTTPStatus
 
+from dotenv import load_dotenv
 from flask import Flask, jsonify, request, abort
 from flask_cors import CORS
 
 from auth import requires_auth, AuthError
 from models import setup_db, Actor, GenderEnum, Movie
 
+load_dotenv()
 
-def create_app(test_config=None):
+
+def create_app(config=os.environ['APP_SETTINGS']):
     # create and configure the app
     app = Flask(__name__)
 
@@ -16,7 +19,7 @@ def create_app(test_config=None):
     # create a APP_SETTINGS variable in .env file such as
     # APP_SETTINGS=config.DevelopmentConfig
 
-    app.config.from_object(os.environ['APP_SETTINGS'])
+    app.config.from_object(config)
 
     setup_db(app)
 
@@ -135,14 +138,14 @@ def create_app(test_config=None):
 
     @app.route('/movies/<int:key>', methods=['DELETE'])
     @requires_auth(permission='delete:movies')
-    def delete_actor(key: int):
+    def delete_movie(key: int):
         movie = Movie.query.get_or_404(key)
         movie.delete()
         return jsonify(success=True), HTTPStatus.OK
 
     @app.route('/movies/<int:key>', methods=['PATCH'])
     @requires_auth(permission='patch:movies')
-    def patch_actor(key: int):
+    def patch_movie(key: int):
         json = request.get_json()
         movie = Movie.query.get_or_404(key)
 
@@ -237,7 +240,7 @@ def create_app(test_config=None):
     return app
 
 
-APP = create_app()
+APP = create_app(config=os.environ['APP_SETTINGS'])
 
 if __name__ == '__main__':
     APP.run(host='0.0.0.0', port=8080, debug=True)

@@ -104,7 +104,7 @@ class Movie(db.Model):
     release_date = Column(DateTime, default=datetime.utcnow)
     actors = db.relationship('Job', backref='actor', lazy=True)
 
-    def __init__(self, title: str, release_date: datetime):
+    def __init__(self, title: str, release_date: datetime = datetime.utcnow()):
         self.title = title
         self.release_date = release_date
 
