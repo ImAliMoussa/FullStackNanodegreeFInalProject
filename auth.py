@@ -1,4 +1,5 @@
 import json
+import os
 from functools import wraps
 from http import HTTPStatus
 from urllib.request import urlopen
@@ -6,9 +7,9 @@ from urllib.request import urlopen
 from flask import request
 from jose import jwt
 
-AUTH0_DOMAIN = 'alimoussa.eu.auth0.com'
+AUTH0_DOMAIN = os.environ['AUTH0_DOMAIN']
 ALGORITHMS = ['RS256']
-API_AUDIENCE = "Capstone-Udacity"
+API_AUDIENCE = os.environ['AUTH0_AUDIENCE']
 
 # AuthError Exception
 '''

@@ -32,7 +32,7 @@ class GenderEnum(enum.Enum):
     constraint gender to be one of:
         male
         female
-    to avoid strings other than in the database
+    to avoid strings other than those in the database
     """
     male = 1
     female = 2
