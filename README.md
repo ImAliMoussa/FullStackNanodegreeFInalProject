@@ -14,13 +14,41 @@ These roles are implemented using Auth0 roles. Each role gets a set of permissio
 
 - Casting Assistant
   - Can view actors and movies
+   - Permissions:
+```
+    "get:actors",
+    "get:movies",
+```
+
 - Casting Director
   - All permissions a Casting Assistant has and…
   - Add or delete an actor from the database
   - Modify actors or movies
+  - Permissions:
+```
+    "delete:actors",
+    "get:actors",
+    "get:movies",
+    "patch:actors",
+    "patch:movies",
+    "post:actors",
+```
+
 - Executive Producer
   - All permissions a Casting Director has and…
   - Add or delete a movie from the database
+  - Permissions:
+```
+    "delete:actors",
+    "delete:movies",
+    "get:actors",
+    "get:movies",
+    "patch:actors",
+    "patch:movies",
+    "post:actors",
+    "post:movies"
+```
+
 
 ---
 
