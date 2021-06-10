@@ -44,6 +44,22 @@ class FlaskTestCase(unittest.TestCase):
 
     # Helper functions
 
+    def postActors(self):
+        token = self.tokens[Roles.executive_producer]
+        json_req_body = {
+            "name": "Ali Moussa",
+            "age": 22,
+            "gender": "male"
+        }
+        self.client().post("/actors", headers=token, json=json_req_body)
+
+    def postMovies(self):
+        token = self.tokens[Roles.executive_producer]
+        json_req_body = {
+            "title": "Random movie name",
+        }
+        self.client().post("/movies", headers=token, json=json_req_body)
+
     def getActors(self):
         # token could be any other token, all roles have get access
         token = self.tokens[Roles.executive_producer]
@@ -100,7 +116,7 @@ class FlaskTestCase(unittest.TestCase):
         Case 2: Roles.executive_producer JWT
         Both should succeed
         """
-        for key in [Roles.casting_director, Roles.executive_producer]:
+        for key in [Roles.executive_producer]:
             token = self.tokens[key]
             json_req_body = {
                 "title": "Harry Potter"
@@ -111,11 +127,17 @@ class FlaskTestCase(unittest.TestCase):
     def test_unauthorized_post_movies(self):
         """
         Test posting to movies
-        Case 1: Role of a casting assistant with JWT added as a bearer token
-        Case 2: No bearer token
+        Case 1: Roles.casting_assistant JWT
+        Case 2: Roles.casting_director JWT
+        Case 3: No bearer token
         Both should fail
         """
-        for token in [self.tokens[Roles.casting_assistant], None]:
+        tokens = [
+            self.tokens[Roles.casting_assistant],
+            self.tokens[Roles.casting_director],
+            None
+        ]
+        for token in tokens:
             json_req_body = {
                 "title": "Harry Potter"
             }
@@ -157,21 +179,26 @@ class FlaskTestCase(unittest.TestCase):
 
     def test_authorized_delete_actors(self):
         """
-        Only executive producer role is authorized to delete actors
+        Executive producer role and casting_director are authorized to delete actors
         """
-        token = self.tokens[Roles.executive_producer]
+        for i in range(2):
+            self.postActors()
+
         actors = self.getActors()
-        actor_to_delete = actors[0].get("id")
-        route = f'/actors/{actor_to_delete}'
-        res = self.client().delete(route, headers=token)
-        self.assertEqual(res.status_code, HTTPStatus.OK)
+
+        index = 0
+        for token in [self.tokens[Roles.executive_producer], self.tokens[Roles.casting_director]]:
+            actor_to_delete = actors[index].get("id")
+            index += 1
+            route = f'/actors/{actor_to_delete}'
+            res = self.client().delete(route, headers=token)
+            self.assertEqual(res.status_code, HTTPStatus.OK)
 
     def test_unauthorized_delete_actors(self):
         """
-        3 Cases will be unauthorized to make deletes
+        2 Cases will be unauthorized to make deletes
         Case 1: Casting assistant
-        Case 2: Casting director
-        Case 3: No jwt
+        Case 2: No jwt
         """
         actors = self.getActors()
         actor_to_delete = actors[0].get("id")
@@ -179,7 +206,6 @@ class FlaskTestCase(unittest.TestCase):
 
         tokens = [
             self.tokens[Roles.casting_assistant],
-            self.tokens[Roles.casting_director],
             None
         ]
 
